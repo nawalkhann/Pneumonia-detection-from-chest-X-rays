@@ -114,6 +114,11 @@ LOGO = ('<svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true"><rec
         'fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>')
 
 
+# Google Search Console HTML-tag verification code, set as an environment variable on Vercel.
+_gsv = os.environ.get("GOOGLE_SITE_VERIFICATION", "").strip()
+VERIFY = f'\n<meta name="google-site-verification" content="{html.escape(_gsv)}">' if _gsv else ""
+
+
 def page_url(base, slug):
     return f"{base}/{slug}" if slug else f"{base}/"
 
@@ -151,7 +156,7 @@ def render(page, body, base, today):
 <meta name="description" content="{desc}">
 <meta name="keywords" content="{html.escape(page["keywords"])}">
 <meta name="author" content="{AUTHOR}">
-<meta name="robots" content="index,follow">
+<meta name="robots" content="index,follow">{VERIFY}
 <link rel="canonical" href="{url}">
 <meta property="og:type" content="{"article" if page["slug"] else "website"}">
 <meta property="og:site_name" content="{SITE_NAME}">
