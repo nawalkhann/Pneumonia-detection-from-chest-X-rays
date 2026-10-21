@@ -1,0 +1,41 @@
+<h1>Pneumonia detection from chest X-rays</h1>
+<p class="lede">A deep learning model that reads pediatric chest X-rays and flags pneumonia. It was fine-tuned from an ImageNet-pretrained CNN, tuned to catch as many sick patients as possible, and explained with Grad-CAM heatmaps.</p>
+
+<div class="stats" role="list">
+  <div class="stat" role="listitem"><b>99.0%</b><span>recall: 386 of 390 pneumonia cases caught</span></div>
+  <div class="stat" role="listitem"><b>0.975</b><span>ROC-AUC on the held-out test set</span></div>
+  <div class="stat" role="listitem"><b>0.983</b><span>average precision</span></div>
+  <div class="stat" role="listitem"><b>624</b><span>real test X-rays, never seen in training</span></div>
+</div>
+
+<div class="cta">
+  <a class="btn primary" href="/results">See the full results</a>
+  <a class="btn" href="https://github.com/nawalkhann/Pneumonia-detection-from-chest-X-rays">Code on GitHub</a>
+</div>
+
+<figure>
+  <img src="/img/gradcam-example-1040.webp" srcset="/img/gradcam-example-520.webp 520w, /img/gradcam-example-1040.webp 1040w" sizes="(max-width: 860px) 100vw, 828px" width="1040" height="1092" alt="Two chest X-rays with pneumonia, each shown next to its Grad-CAM heatmap. In the top case the heat sits on a hazy area in the left lung. In the bottom case the heat drifts to the neck and medical lines." fetchpriority="high">
+  <figcaption>Grad-CAM on two real test X-rays. Top: the model focuses on the opacity in the lung. Bottom: it focuses on the neck and lines, a sign of shortcut learning.</figcaption>
+</figure>
+
+<h2>What this project does</h2>
+<p>Pneumonia is one of the leading causes of death in children under five, and a chest X-ray is the standard way to confirm it. Reading X-rays takes trained radiologists, who are in short supply in many places. A screening model that flags likely pneumonia can put the most urgent images at the top of the queue.</p>
+<p>This project trains such a model on the public <a href="https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia">Kaggle Chest X-Ray Images (Pneumonia)</a> dataset: 5,856 real X-rays of children aged one to five from Guangzhou Women and Children's Medical Center, labeled by expert physicians.</p>
+<ul>
+  <li><b>Transfer learning.</b> An EfficientNet-B0 network pretrained on ImageNet is fine-tuned end to end on the X-rays. Starting from general image features is far faster and more accurate than training from scratch on six thousand images.</li>
+  <li><b>Optimized for recall.</b> Missing a sick patient is much worse than a false alarm, so the decision threshold is chosen on validation data to keep recall at 98% or more. On the test set the model misses only 4 of 390 pneumonia cases.</li>
+  <li><b>Explainable.</b> Grad-CAM heatmaps show which part of each X-ray drove the prediction, so you can check whether the model is looking at the lungs or at something it should not.</li>
+</ul>
+
+<h2>Explore the project</h2>
+<div class="cards">
+  <div class="card"><h3><a href="/results">Results</a></h3><p>Recall, specificity, precision, confusion matrices, ROC and precision-recall curves on 624 test X-rays.</p></div>
+  <div class="card"><h3><a href="/grad-cam">Grad-CAM heatmaps</a></h3><p>Where the CNN looks for caught cases, misses, false alarms and healthy lungs.</p></div>
+  <div class="card"><h3><a href="/method">Method</a></h3><p>Data, patient-level split, EfficientNet-B0 fine-tuning, augmentation and class weights.</p></div>
+  <div class="card"><h3><a href="/why-recall-matters">Why recall matters</a></h3><p>Why accuracy is the wrong target for a screening model, and how to pick a threshold.</p></div>
+</div>
+
+<h2>Tech stack</h2>
+<p>Python, PyTorch, timm (EfficientNet-B0), scikit-learn for metrics, matplotlib for figures, and a hand-written Grad-CAM using PyTorch hooks. Training ran on a 4-core CPU in about 30 minutes.</p>
+
+<div class="note"><b>Not a medical device.</b> This is a portfolio and learning project trained on a single-site pediatric dataset. It should not be used to diagnose anyone.</div>

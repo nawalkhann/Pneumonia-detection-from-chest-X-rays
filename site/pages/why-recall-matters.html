@@ -1,0 +1,48 @@
+<h1>Why recall matters in medical AI</h1>
+<p class="lede">A pneumonia model with 95% accuracy can still be dangerous. For a screening tool, the number that matters most is how many sick patients it misses. Here is how this project chose what to optimize, and what it cost.</p>
+
+<h2>The two kinds of mistakes</h2>
+<p>A pneumonia classifier can be wrong in two ways:</p>
+<ul>
+  <li><b>False negative (a miss):</b> a child with pneumonia is told the X-ray looks fine. Treatment is delayed, and pneumonia in young children can get worse quickly.</li>
+  <li><b>False positive (a false alarm):</b> a healthy child is flagged. A doctor takes a second look and clears the X-ray. It costs some time.</li>
+</ul>
+<p>These mistakes are not equally bad. A screening model should be built to make the cheap mistake much more often than the expensive one.</p>
+
+<h2>Recall, precision and specificity in one minute</h2>
+<div class="table-scroll">
+<table>
+  <thead><tr><th>Metric</th><th>Question it answers</th><th>This model on the test set</th></tr></thead>
+  <tbody>
+    <tr><td><b>Recall</b> (sensitivity)</td><td>Of all sick patients, how many did we catch?</td><td>99.0% (386 of 390)</td></tr>
+    <tr><td>Specificity</td><td>Of all healthy patients, how many did we clear?</td><td>62.8% (147 of 234)</td></tr>
+    <tr><td>Precision</td><td>Of all patients we flagged, how many were really sick?</td><td>81.6%</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Why accuracy is the wrong target</h2>
+<p>About 74% of this dataset's training images show pneumonia. A model that labels every image "pneumonia" scores 74% accuracy without looking at anything. In a real clinic, where most X-rays are normal, the trick flips: a model that says "normal" every time can look highly accurate while missing every sick patient. Accuracy hides exactly the error we care about most.</p>
+
+<h2>The threshold is a dial</h2>
+<p>The model outputs a probability between 0 and 1. The threshold decides where "pneumonia" starts. Lower it, and the model flags more X-rays: recall goes up, and so do false alarms. Raise it, and the opposite happens. There is no free setting; the threshold is where you decide how many false alarms one caught case is worth.</p>
+<p>The common mistake is to tune that dial on the test set. That leaks information and makes the reported numbers look better than they will be on new patients. In this project the threshold was chosen on the validation set only:</p>
+<ol>
+  <li>Score every validation X-ray.</li>
+  <li>Find the highest threshold that keeps validation recall at or above 98%.</li>
+  <li>Freeze it (0.34), then score the test set once.</li>
+</ol>
+
+<h2>What it cost</h2>
+<p>On the test set the model catches 386 of 390 pneumonia cases and misses 4. It also flags 87 of 234 healthy X-rays, roughly one in three. In screening, that is the intended trade: each false alarm means a doctor spends a minute on a second look, and each miss could mean an untreated child.</p>
+<p>The low specificity is also a signal for future work. Better calibration on data from more hospitals, and training that discourages <a href="/grad-cam">shortcut features</a>, would bring false alarms down without giving up recall.</p>
+
+<h2>Takeaways</h2>
+<ul>
+  <li>Decide which error is more expensive before you choose a metric.</li>
+  <li>For screening, optimize recall and report specificity honestly next to it.</li>
+  <li>Pick the threshold on validation data and touch the test set once.</li>
+  <li>Use the confusion matrix, not a single accuracy number, to describe a medical model.</li>
+</ul>
+
+<p class="next">See the full numbers on the <a href="/results">results page</a>.</p>

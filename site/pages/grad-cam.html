@@ -1,0 +1,31 @@
+<h1>Grad-CAM: where the model looks</h1>
+<p class="lede">A high recall number says the model is right. Grad-CAM shows why. These heatmaps highlight the regions of each chest X-ray that pushed the model toward a pneumonia prediction.</p>
+
+<h2>What Grad-CAM is</h2>
+<p>Gradient-weighted Class Activation Mapping (<a href="https://arxiv.org/abs/1610.02391">Selvaraju et al., 2017</a>) is a way to explain a convolutional neural network's decision. It takes the gradient of the pneumonia score with respect to the last convolutional layer, averages it into one weight per feature map, and sums the weighted maps. The result is a coarse heatmap: bright where the evidence for pneumonia is strongest.</p>
+<p>In this project Grad-CAM is written from scratch with PyTorch forward and backward hooks on EfficientNet-B0's <code>conv_head</code> layer, with no extra library.</p>
+
+<h2>A good case and a warning sign</h2>
+<figure>
+  <img src="/img/gradcam-example-1040.webp" srcset="/img/gradcam-example-520.webp 520w, /img/gradcam-example-1040.webp 1040w" sizes="(max-width: 860px) 100vw, 828px" width="1040" height="1092" loading="lazy" alt="Two pneumonia X-rays with Grad-CAM overlays. Top: heat on a consolidated area in the left lung. Bottom: heat on the neck and medical lines at the top of the image.">
+  <figcaption>Top: heat on the opacity in the lung, which is what a radiologist would look at. Bottom: equally confident, but the heat sits on the neck and lines.</figcaption>
+</figure>
+
+<h2>Sixteen test X-rays, by outcome</h2>
+<p>To avoid cherry-picking, the grid below shows four randomly chosen test images from each outcome: pneumonia caught, false alarm on a healthy X-ray, and healthy X-ray correctly cleared. The missed row shows all four misses in the test set.</p>
+<figure>
+  <img src="/img/gradcam-grid-1352.webp" srcset="/img/gradcam-grid-680.webp 680w, /img/gradcam-grid-1352.webp 1352w" sizes="(max-width: 860px) 100vw, 828px" width="1352" height="1612" loading="lazy" alt="A grid of sixteen chest X-rays with Grad-CAM heatmaps, four rows: pneumonia caught, pneumonia missed, false alarm and normal cleared, each image labeled with its pneumonia probability.">
+  <figcaption>Grad-CAM on 16 test X-rays, grouped by outcome. <a href="/img/gradcam-grid.png">Open the full-resolution image</a>.</figcaption>
+</figure>
+
+<h2>What the heatmaps reveal</h2>
+<ul>
+  <li><b>Most caught cases look at the lungs.</b> For the majority of correctly flagged pneumonia X-rays, the heat sits on the lung fields, on the hazy, consolidated areas that radiologists read as infection.</li>
+  <li><b>Some predictions use shortcuts.</b> A few confident predictions put the heat on the neck, shoulders, or tubes and lines. Sicker children are more likely to have lines in place, so the model can learn that lines mean pneumonia. That is a shortcut feature, and it would not hold up in another hospital.</li>
+  <li><b>Healthy X-rays are mostly empty.</b> When the model is confident an X-ray is normal, the map is nearly blank, with faint heat at the corners. With no evidence of pneumonia there is little to highlight.</li>
+</ul>
+
+<h2>Why this matters</h2>
+<p>A model can score well on a test set for the wrong reasons. Explainability tools like Grad-CAM are how you catch that before anyone trusts the model. Here they confirm that the model mostly learned real lung findings, and they also show exactly where it did not, which is the most useful thing to know before improving it. Natural next steps would be cropping to the lung fields or masking out lines and labels during training.</p>
+
+<p class="next">Next: <a href="/method">how the model was trained</a>.</p>
