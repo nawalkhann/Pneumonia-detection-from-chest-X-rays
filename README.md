@@ -2,6 +2,8 @@
 
 Fine-tuned an ImageNet-pretrained CNN (EfficientNet-B0) to detect pneumonia in pediatric chest X-rays, tuned the decision threshold for recall, and added Grad-CAM heatmaps to show which part of the lung drives each prediction.
 
+**Website:** [pneumonia-detection-xray.vercel.app](https://pneumonia-detection-xray.vercel.app) — results, Grad-CAM heatmaps, method and a short article on why recall matters.
+
 Everything below was trained and scored on the real Kaggle **Chest X-Ray Images (Pneumonia)** dataset ([paultimothymooney/chest-xray-pneumonia](https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia), originally from Kermany et al., *Cell* 2018). No synthetic or placeholder images are used anywhere.
 
 ## Results on the held-out test set (624 real X-rays)
