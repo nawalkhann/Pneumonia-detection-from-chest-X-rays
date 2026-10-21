@@ -1,0 +1,66 @@
+<h1>Results on 624 real test X-rays</h1>
+<p class="lede">The model catches 99.0% of pneumonia cases on the held-out Kaggle test set. The price is false alarms: about a third of healthy X-rays get flagged for a second look.</p>
+
+<div class="stats" role="list">
+  <div class="stat" role="listitem"><b>99.0%</b><span>recall (sensitivity)</span></div>
+  <div class="stat" role="listitem"><b>4</b><span>missed pneumonia cases out of 390</span></div>
+  <div class="stat" role="listitem"><b>0.975</b><span>ROC-AUC</span></div>
+  <div class="stat" role="listitem"><b>0.983</b><span>average precision</span></div>
+</div>
+
+<h2>Test-set metrics</h2>
+<p>The test set has 390 pneumonia and 234 normal X-rays. It was scored once, after all choices about the model and threshold were made on validation data.</p>
+<div class="table-scroll">
+<table>
+  <thead><tr><th>Metric</th><th>Default threshold 0.50</th><th>Recall-tuned threshold 0.34</th></tr></thead>
+  <tbody>
+    <tr><td><b>Recall (sensitivity)</b></td><td><b>99.0%</b> (386 / 390)</td><td><b>99.0%</b> (386 / 390)</td></tr>
+    <tr><td>Specificity</td><td>67.9% (159 / 234)</td><td>62.8% (147 / 234)</td></tr>
+    <tr><td>Precision</td><td>83.7%</td><td>81.6%</td></tr>
+    <tr><td>F1 score</td><td>0.907</td><td>0.895</td></tr>
+    <tr><td>Accuracy</td><td>87.3%</td><td>85.4%</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Confusion matrices</h2>
+<figure>
+  <img src="/img/confusion-matrices-1380.webp" srcset="/img/confusion-matrices-690.webp 690w, /img/confusion-matrices-1380.webp 1380w" sizes="(max-width: 860px) 100vw, 828px" width="1380" height="600" loading="lazy" alt="Two confusion matrices. At threshold 0.50: 159 normal correctly cleared, 75 false alarms, 4 missed pneumonia, 386 pneumonia caught. At threshold 0.34: 147 cleared, 87 false alarms, 4 missed, 386 caught.">
+  <figcaption>Rows are the true label, columns the prediction. Both thresholds miss the same 4 pneumonia cases; the lower threshold adds 12 false alarms.</figcaption>
+</figure>
+
+<h2>ROC and precision-recall curves</h2>
+<figure>
+  <img src="/img/roc-pr-curves-1500.webp" srcset="/img/roc-pr-curves-750.webp 750w, /img/roc-pr-curves-1500.webp 1500w" sizes="(max-width: 860px) 100vw, 828px" width="1500" height="630" loading="lazy" alt="ROC curve with area 0.975 and precision-recall curve with average precision 0.983 for the pneumonia classifier on the test set.">
+  <figcaption>The ROC curve rises steeply toward the top left (AUC 0.975), and precision stays above 80% until recall is close to 100%.</figcaption>
+</figure>
+
+<h2>How to read these numbers</h2>
+<h3>Why the threshold is 0.34</h3>
+<p>A classifier outputs a probability, and the threshold turns it into a yes or no. The threshold was picked on the validation set only, as the highest cut-off that keeps validation recall at or above 98%. It came out at 0.34. On the test set it gives the same 99.0% recall as 0.50, because the four missed cases all score below 0.30, and it adds a few more false alarms. The <a href="/why-recall-matters">recall article</a> explains this choice in more detail.</p>
+
+<h3>Why specificity drops on the test set</h3>
+<p>On validation data, specificity was 99.3%. On the official test set it is 62.8%. This gap is a known property of this dataset: the test split was collected differently from the training images, and most published models on it show the same drop. These are the honest test-set numbers, not validation numbers.</p>
+
+<h3>Validation results</h3>
+<p>On the 573-image patient-level validation split, the model reached a ROC-AUC of 0.999, recall of 98.8%, specificity of 99.3% and precision of 99.8% at the 0.34 threshold.</p>
+
+<h2>Training progress</h2>
+<div class="table-scroll">
+<table>
+  <thead><tr><th>Epoch</th><th>Train loss</th><th>Val ROC-AUC</th><th>Val recall at 0.50</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>0.611</td><td>0.9869</td><td>88.0%</td></tr>
+    <tr><td>2</td><td>0.226</td><td>0.9949</td><td>91.9%</td></tr>
+    <tr><td>3</td><td>0.082</td><td>0.9969</td><td>97.9%</td></tr>
+    <tr><td>4</td><td>0.065</td><td>0.9984</td><td>98.6%</td></tr>
+    <tr><td>5</td><td>0.055</td><td>0.9989</td><td>96.5%</td></tr>
+    <tr><td>6</td><td>0.038</td><td>0.9990</td><td>97.2%</td></tr>
+    <tr><td><b>7 (kept)</b></td><td>0.041</td><td><b>0.9992</b></td><td>97.9%</td></tr>
+    <tr><td>8</td><td>0.037</td><td>0.9991</td><td>98.2%</td></tr>
+  </tbody>
+</table>
+</div>
+<p>The checkpoint with the best validation ROC-AUC (epoch 7) was kept. Every number on this page comes from <a href="https://github.com/nawalkhann/Pneumonia-detection-from-chest-X-rays/blob/main/outputs/metrics.json">metrics.json</a> and <a href="https://github.com/nawalkhann/Pneumonia-detection-from-chest-X-rays/blob/main/outputs/history.json">history.json</a> in the repository.</p>
+
+<p class="next">Next: <a href="/grad-cam">see where the model looks with Grad-CAM</a>.</p>

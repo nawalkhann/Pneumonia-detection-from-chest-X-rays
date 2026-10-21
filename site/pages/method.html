@@ -1,0 +1,65 @@
+<h1>Method: transfer learning on chest X-rays</h1>
+<p class="lede">How an ImageNet-pretrained EfficientNet-B0 was fine-tuned into a pneumonia detector, step by step, with every choice made to keep the test-set numbers honest.</p>
+
+<h2>1. Data</h2>
+<p>The model uses the original <a href="https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia">Kaggle Chest X-Ray Images (Pneumonia)</a> dataset, from Kermany et al., <i>Cell</i> 2018. All images are real anterior-posterior chest X-rays of children aged one to five.</p>
+<div class="table-scroll">
+<table>
+  <thead><tr><th>Folder</th><th>Normal</th><th>Pneumonia</th><th>Total</th></tr></thead>
+  <tbody>
+    <tr><td>train</td><td>1,341</td><td>3,875</td><td>5,216</td></tr>
+    <tr><td>val</td><td>8</td><td>8</td><td>16</td></tr>
+    <tr><td>test</td><td>234</td><td>390</td><td>624</td></tr>
+  </tbody>
+</table>
+</div>
+<p>The preparation script checks these exact counts before doing anything, so a partial or altered download fails loudly.</p>
+
+<h2>2. A patient-level validation split</h2>
+<p>Kaggle's validation folder has only 16 images, far too few to choose a checkpoint or a threshold. So the train and val folders were pooled and about 10% of <b>patients</b> were held out as validation (573 images). Many patients have more than one X-ray, so splitting by image would leak the same patient into both sets and inflate the scores. Splitting by patient id prevents that. The test set is used only once, at the very end.</p>
+
+<h2>3. Model: EfficientNet-B0 with transfer learning</h2>
+<p>EfficientNet-B0 is a compact CNN (about 5 million parameters) that is accurate for its size. It starts from ImageNet weights from the timm library, its classifier is replaced with a single-logit head for pneumonia vs normal, and all layers are fine-tuned. Grayscale X-rays are resized to 256 pixels and center-cropped to 224 pixels.</p>
+
+<h2>4. Augmentation</h2>
+<ul>
+  <li>Random resized crop covering 80 to 100% of the image</li>
+  <li>Rotation of up to 10 degrees and small shifts</li>
+  <li>Brightness and contrast jitter, to mimic different X-ray machines and exposures</li>
+  <li>No horizontal flip: the heart sits on the left, and flipping would create anatomy that does not exist</li>
+</ul>
+
+<h2>5. Handling class imbalance</h2>
+<p>About 74% of the training images show pneumonia. Without correction, a model can score well by leaning toward "pneumonia" for everything. Binary cross-entropy with balanced class weights keeps the normal class from being ignored during training, and recall is then pushed up deliberately with the decision threshold.</p>
+
+<h2>6. Training</h2>
+<ul>
+  <li>Optimizer: AdamW, learning rate 3e-4 on a one-cycle schedule</li>
+  <li>Batch size 32, 8 epochs, about 4 minutes per epoch on a 4-core CPU</li>
+  <li>Checkpoint selection: best validation ROC-AUC (epoch 7, AUC 0.999)</li>
+</ul>
+
+<h2>7. Choosing the decision threshold for recall</h2>
+<p>On the validation set, the threshold is set to the highest value that keeps recall at or above 98%. That came out at 0.34. The test set is then scored once at that threshold. See <a href="/why-recall-matters">why recall matters</a> for the reasoning.</p>
+
+<h2>8. Grad-CAM</h2>
+<p>Hooks on the last convolutional layer capture activations and gradients of the pneumonia logit. The gradients are averaged into channel weights, combined with the activations, passed through a ReLU and upsampled onto the X-ray. Results are on the <a href="/grad-cam">Grad-CAM page</a>.</p>
+
+<h2>Reproduce it</h2>
+<pre><code>pip install -r requirements.txt
+kaggle datasets download -d paultimothymooney/chest-xray-pneumonia -p data --unzip
+curl -L -o efficientnet_b0.pth https://github.com/huggingface/pytorch-image-models/releases/download/v0.1-weights/efficientnet_b0_ra-3dd342df.pth
+python prepare_data.py --root data/chest_xray --out cache
+mkdir -p outputs
+python train.py --weights efficientnet_b0.pth --epochs 8
+python evaluate.py --target-recall 0.98
+python gradcam.py</code></pre>
+<p>The trained model (16 MB) and all metrics are in the <a href="https://github.com/nawalkhann/Pneumonia-detection-from-chest-X-rays">GitHub repository</a>.</p>
+
+<h2>Limitations</h2>
+<ul>
+  <li>Single-site pediatric data (Guangzhou, ages 1 to 5). It says nothing about adults or other hospitals.</li>
+  <li>Low specificity on the official test split: about 1 in 3 healthy X-rays is flagged.</li>
+  <li>Some heatmaps point to shortcut features such as lines, the neck and image borders.</li>
+  <li>A portfolio and learning project, not a medical device.</li>
+</ul>
